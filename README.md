@@ -153,8 +153,94 @@ The word `emma` becomes:
 ('m','a')
 ('a','.')
 ```
+
 These becomes 5 learning examples for the model. This is done because every character needs to predict what comes after it.
 <br>
 
-Hence we have transformed a data set of words into a dataset of events (what character comes after what). Now we have something we can count. Once we have thousands of these events, we can ask:
-"How many times does each character follow another character?"
+Hence we have transformed a data set of words into a dataset of events (what character comes after what). Now we have something we can count.
+<br>
+
+But this is only one name. Our model needs to learn from the entire dataset. So now we need to find: Across all names, how often does each character follow another character? That is what the matrix N stores.
+
+# Step 2: Counting the bigrams (the matrix N)
+Suppose our data set is:
+```
+emma
+anna
+amy
+```
+
+After step 1, these names are converted into:<br>
+
+emma: `(., e) (e, m) (m, m) (m, a) (a, .)` <br>
+
+anna: `(., a) (a, n) (n, n) (n, a) (a, .)`<br>
+
+amy: `(., a) (a, m) (m, y) (y, .)` <br>
+
+Now we need to build the frequency table- How many times did the following occur:
+```
+m → a =1
+a → . =2
+```
+
+## The idea of matrix N
+We create a grid: Rows = current character and Columns = next character. For example-
+```
+        .   a   b   c   d   ...
+     -------------------------
+.   |   0   2   0   0   0
+a   |   2   0   1   0   0
+b   |   0   0   0   4   0
+c   |   0   0   0   0   2
+...
+```
+
+- This is our matrix: N
+- The meaning of a single cell: N[i,j] means how many times character i was followed by character j?
+- Example: N[m,a] means how many times did m appear before a?
+- Why 27 × 27? Our data set has only lower case alphabets `(a-z)` which means 26 characters and one for the special boundary token `.`.
+- Since every character can have any other character as the next character, each character has 27 ways. So, total possible transitions are 27 x 27.
+
+## But computers don't understand letters
+The matrix cannot have:
+```
+        a b c
+a       0 3 1
+b       2 0 4
+```
+
+Computers need numbers, so we create mappings:
+```
+stoi = {
+'a':1,
+'b':2,
+'c':3,
+...
+'.':0
+}
+```
+
+- stoi means string to integer
+- example: `m` becomes 13
+- hence: N[13,1] means count of `m` followed by `a`
+## How counting happens:
+```
+for w in words:
+  chs = ['.'] + list(w) + ['.']
+  for ch1, ch2 in zip(chs, chs[1:]):
+    ix1 = stoi[ch1]
+    ix2 = stoi[ch2]
+    N[ix1, ix2] += 1
+```
+
+The following steps will happen for every word, for example: emma:
+- emma is converted into .emma.
+- then pairs are taken: `(., e) (e, m) (m, m) (m, a) (a, .)`
+- then characters are convered into numbers, for example: .->0, e->5
+- then count is increased, for example: N[0,5] += 1 (meaning: Increase the count of . → e by one)
+
+The numbers in N are raw counts and not probabilites. Next we turn counts into probabilities.
+So up till here we have answered: "How many times did each transition happen?" <br>
+
+Now we answer: "Given a character, what are the chances of each possible next character?"
