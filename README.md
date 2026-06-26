@@ -244,3 +244,186 @@ The numbers in N are raw counts and not probabilites. Next we turn counts into p
 So up till here we have answered: "How many times did each transition happen?" <br>
 
 Now we answer: "Given a character, what are the chances of each possible next character?"
+
+# Step 3: Turning counts into probabilities (the matrix P)
+Now, we want to convert:
+```
+m → a happened 50 times
+m → e happened 20 times
+m → i happened 10 times
+```
+into:
+```
+If I see m:
+
+a → 62.5%
+e → 25%
+i → 12.5%
+```
+
+This would create a probability distribution from which we can sample from.
+We have already built: `N` the count matrix.
+Example:
+```
+        a   e   i   .
+m       50  20  10  0
+```
+
+Meaning: After m-
+- a appeared 50 times
+- e appeared 20 times
+- i appeared 10 times
+
+Total: 50+20+10=80 <br>
+
+But these numbers are not probabilities, they're just frequencies. Probablities must add up to 1. Hence we normalize.
+
+## Normalization
+P (next∣current)= count(current,next)​ / total counts after current
+<br>
+
+For example: for `m`-
+- P(m→a)=50/80= 0.625
+- P(m→e)=20/80= 0.25
+- P(m→i)=10/80= 0.125
+
+Now these terms add up to 1: 0.625+0.25+0.125=1
+
+## Matrix P
+Now we create a matrix P, which can be considered as the probability version of matrix N.
+For example:
+<br>
+
+N:
+```
+        a   e   i
+
+m       50  20  10
+```
+
+becomes- P:
+```
+        a      e      i
+
+m       .625   .25    .125
+```
+
+Now every row is a probability distribution. <br>
+
+<b>Why rows?</b> As we discussed, rows represent the current character and the columns represent the next character.
+<br>
+
+So: P[m] means: show the probability of coming after m for all charachters.
+
+## Code explanation
+```
+P = (N+1).float()
+```
+- creates a copy of N and converts counts into floating point numbers.
+- Why +1? This is called smoothing. +1 adds a count of exactly 1 to every single element in the tensor. This eliminates any zeros in our data (Laplace smoothing). This means that every possible transition gets a tiny probability.
+
+Example:
+```
+before-
+a: 0
+b: 0
+c: 5
+
+after-
+a: 1
+b: 1
+c: 6
+```
+
+Smoothing makes a model less confident (which means the model's predictions are less extreme and closer to a 50/50 guess)
+```
+P /= P.sum(1, keepdims=True)
+```
+
+This means: divide every row by its row total.
+Example:
+```
+Before:
+[50,20,10]
+sum: 80
+
+After:
+[50/80,20/80,10/80]
+=> [0.625,0.25,0.125]
+```
+
+Hence, now we can generate. Earlier we only knew- m happened 50 times before a, etc etc.<br>
+
+Now we know- after m:
+- a has probability 62%
+- e has probability 25%
+- i has probability 13%
+
+## Important Note: No need for training loop and how it is different from neural network.
+We are not guessing any parameters or optimizing anything. The data set already tells us the answer.
+So, the whole process of guessing weights, calculating error, backpropogation and optimizing weights is not occuring here.
+<br>
+
+The best probability estimate is simply: count/total
+<br>
+​
+If: In 1000 names after q, u appears 900 times, then the model should learn:
+```
+P(u∣q)=0.9
+```
+
+There is nothing to optimize.
+The calculation itself gives the optimal table.
+
+# Step 4: Using P to generate
+First let us understand what do we want? We want our model to create a new name. Not copy (retrieve) a name from the dataser. The goal is not to pick the name `emma` from the list, it is to generate a new sequence that follows same patterns which the model learnt in the data set.
+<br>
+
+We now have a probability matrix P. A row tells that if it is currently at this character what is the probability of all the other characters to come next.<br>
+
+For example: lets take `m`, what we might have is-
+```
+P[m]
+
+a : 60%
+i : 25%
+o : 10%
+. : 5%
+```
+
+meaning if the current character is `m`:
+- choose a most often
+- sometimes choose i
+- sometimes finish the word
+
+## How generation starts
+Every word starts from the boundary symbol: `.` The model does not know "start", so we represent beginning of the word as `.`
+<br>
+
+So we will have: P[.]
+example:
+```
+P[.]
+
+a: 20%
+e: 30%
+m: 10%
+l: 40%
+```
+
+Hence for the model the first letter would probably be one of these.
+
+## Weighted random choice
+This is an important concept. We donot choose the character with the highest probability.
+Meaning we donot always do 40% → l therefore choose 1. Because then every generation would be identical.
+<br>
+
+By using sampling methods like torch.multinomial(), we introduce controlled randomness.
+A good analogy to understand this is-
+<br>
+
+"Instead of automatically picking "l", torch.multinomial() acts like spinning a roulette wheel where the slots match those percentages.40% of the wheel is "l" 30% of the wheel is "e" And so on...If you spin it 10 times, "l" will likely win about 4 times, but "a" or "m" will still win occasionally. This is how AI generates creative, diverse, and different responses to the same input."
+<br>
+
+I found this analogy really helpful to understand the use of torch.multinomial().
+Hence: <b>torch.multinomial() draws random samples from a given probability distribution<b>
