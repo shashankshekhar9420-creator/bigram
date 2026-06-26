@@ -427,3 +427,129 @@ A good analogy to understand this is-
 
 I found this analogy really helpful to understand the use of torch.multinomial().
 Hence: <b>torch.multinomial() draws random samples from a given probability distribution<b>
+<br>
+
+Example generation:
+- At thr start we have `.`.
+- Model looks up at P[.] and say it picks `e`
+- Next it looks up P[e] and say it picks `m`
+- Next it looks up P[m] and say it picks `m`
+- Next it looks up P[m] and say it picks `a`
+- Next it looks up P[a] and say it picks `.`
+- The dot means stop
+
+Removing the boundary symbols, the output is: `emma`
+
+# Step 5: Using P to measure quality
+Until now we built a model that can generate. But now we want one number that summarizes: "How well does this model explain the real data?"
+<br>
+We will measure loss. Low loss means the model is good whereas high loss means the model is bad.
+We have two things- the probability matrix and the actual data, which has the events that actually happend. 
+<br>
+
+Now we compare:
+"What probability did the model give to the thing that really happened?"
+
+## 1. Look up the real transition
+Lets take `emma` for example. One real bigram is: e → m. Now we go our probability table: P[e,m] say it is equal to 0.125. Which means that the model says: given e, there is a 12.5% chance that the next character is m.
+<br>
+
+Important rule: We take only this one value, not all probablities after `e`, only the probability of what actually happened.
+## 2. Take the log
+We have: P(e→m)=0.125, now we will take log: log(0.125)
+<br>
+
+Why? Because probabilities would multiply.
+<br>
+
+For the word: `emma` <br>
+
+The probability is: P(.e)×P(em)×P(mm)×P(ma)×P(a.)  ->This would be a very small number. Log turns multiplication into addition. 
+```
+log(ab)=log(a)+log(b)
+```
+
+## 3. Add all log probabilities
+We start: `log_likelihood = 0`
+<br>
+
+Then for every bigram we add (example):
+```
+. → e
+e → m
+m → m
+m → a
+a → .
+
+log(P[. , e])
++
+log(P[e , m])
++
+log(P[m , m])
++
+log(P[m , a])
++
+log(P[a , .])
+```
+
+At the end: `log_likelihood` is a big number.
+
+## What does this number mean?
+A good model: assigns high probabilities.
+Example:
+```
+Real event: e → m
+Model says: 90%
+Log: log(0.9)=> which is close to: 0=> Good.
+```
+```
+Bad model:
+Real event: e → m
+Model says: 1%
+Log: log(0.01)=> which is a large negative number.=> Bad.
+```
+
+## 4. Negative log likelihood
+The problem is log likelihood is negative. We prefer lower loss (better).
+Example:
+```
+Good: -20
+Bad: -200
+```
+So we flip the sign:
+<br>
+
+NLL=−log likelihood
+```
+Now:
+Good model: 20
+Bad model: 200
+```
+
+Now lower NLL is better, just like loss.
+
+## 5. Average NLL
+Suppose:
+```
+Dataset A: 100 transitions
+Dataset B: 10000 transitions
+```
+The bigger dataset naturally creates a bigger number. So we take an average, where n is the number of bigrams.
+<br>
+
+Average NLL = NLL/n
+
+# Where this is heading
+We want a model that can learn patterns without us explicitly building the probability table.
+The bigram model works because the problem is tiny. We only look for the probability of the next character by looking at the current character.
+<br>
+
+Hence for: current character → next character, there are only 27 X 27 possible relationships. So we can literally count them.
+<br>
+
+But imagine we want: previous 10 characters → next character
+For previous one character 27 possibilites were there. For ten: 27 raised to the power 10.
+Such a large matrix would be impossible to store and count, hence we need to build something smarter.
+<br>
+
+One thing we have is very important and that is the average negative log likelihood. This is the loss, a good model will have lower loss and a bad model will have larger loss. The loss tells us how far away is the model from the data.
