@@ -240,6 +240,10 @@ The following steps will happen for every word, for example: emma:
 - then characters are converted into numbers, for example: .->0, e->5
 - then count is increased, for example: N[0,5] += 1 (meaning: Increase the count of . → e by one)
 
+<br>
+<img width="1252" height="1252" alt="image" src="https://github.com/user-attachments/assets/ff95498b-497d-4391-9500-a7b9d953a8e9" />
+<br>
+
 The numbers in N are raw counts and not probabilities. Next we turn counts into probabilities.
 So up till here we have answered: "How many times did each transition happen?" <br>
 
