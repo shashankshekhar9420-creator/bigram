@@ -3,7 +3,7 @@ This project is an implementation of a character-level bigram language model fro
 <br>
 
 First let us clear out the concept and avoid any misconception:
-- The model is generative. It does not memorize the words from the data set. What is does is it generates the next token or character based on what it has learned in the data set (the relationships and its probabilites).
+- The model is generative. It does not memorize the words from the data set. What it does is it generates the next token or character based on what it has learned in the data set (the relationships and its probabilities).
 - So, this distinction is very important that unlike a traditional program, which "retrieves" data from existing data set, our model is "generative".
 Let us understand this through an illustration:<br>
 
@@ -27,7 +27,7 @@ Why would that happen? Because the model does not know that `door` is a thing an
 The goal of this project is to build a program that can generate new names that look similar to the data set of the names the model is trained on.
 <br>
 
-The data set contains names. Those are the only things that the model sees, we never define spelling rules, grammer rules or instructions about what would make a name sound human. We only provide examples. So what we are trying to find out is: <i> Can a computer learn patterns from examples alone and use those patterns to create something new?</i>
+The data set contains names. Those are the only things that the model sees, we never define spelling rules, grammar rules or instructions about what would make a name sound human. We only provide examples. So what we are trying to find out is: <i> Can a computer learn patterns from examples alone and use those patterns to create something new?</i>
 <br>
 
 At the beginning, we have nothing more than a text file:
@@ -39,7 +39,7 @@ sophia
 ..
 ```
 A computer does not see names. It sees just a sequence of characters- it does not know that "emma" is a name. It only learns the patterns- after e, m often appears; after m, m or a often appears.
-This project is about converting this raw sequence of characters into something mathematical that out machine can learn from.
+This project is about converting this raw sequence of characters into something mathematical that our machine can learn from.
 <br>
 
 ## The core idea: prediction
@@ -237,10 +237,10 @@ for w in words:
 The following steps will happen for every word, for example: emma:
 - emma is converted into .emma.
 - then pairs are taken: `(., e) (e, m) (m, m) (m, a) (a, .)`
-- then characters are convered into numbers, for example: .->0, e->5
+- then characters are converted into numbers, for example: .->0, e->5
 - then count is increased, for example: N[0,5] += 1 (meaning: Increase the count of . → e by one)
 
-The numbers in N are raw counts and not probabilites. Next we turn counts into probabilities.
+The numbers in N are raw counts and not probabilities. Next we turn counts into probabilities.
 So up till here we have answered: "How many times did each transition happen?" <br>
 
 Now we answer: "Given a character, what are the chances of each possible next character?"
@@ -313,7 +313,7 @@ Now every row is a probability distribution. <br>
 <b>Why rows?</b> As we discussed, rows represent the current character and the columns represent the next character.
 <br>
 
-So: P[m] means: show the probability of coming after m for all charachters.
+So: P[m] means: show the probability of coming after m for all characters.
 
 ## Code explanation
 ```
@@ -361,7 +361,7 @@ Now we know- after m:
 
 ## Important Note: No need for training loop and how it is different from neural network.
 We are not guessing any parameters or optimizing anything. The data set already tells us the answer.
-So, the whole process of guessing weights, calculating error, backpropogation and optimizing weights is not occuring here.
+So, the whole process of guessing weights, calculating error, backpropagation and optimizing weights is not occuring here.
 <br>
 
 The best probability estimate is simply: count/total
@@ -376,7 +376,7 @@ There is nothing to optimize.
 The calculation itself gives the optimal table.
 
 # Step 4: Using P to generate
-First let us understand what do we want? We want our model to create a new name. Not copy (retrieve) a name from the dataser. The goal is not to pick the name `emma` from the list, it is to generate a new sequence that follows same patterns which the model learnt in the data set.
+First let us understand what do we want? We want our model to create a new name. Not copy (retrieve) a name from the dataset. The goal is not to pick the name `emma` from the list, it is to generate a new sequence that follows same patterns which the model learnt in the data set.
 <br>
 
 We now have a probability matrix P. A row tells that if it is currently at this character what is the probability of all the other characters to come next.<br>
@@ -414,8 +414,8 @@ l: 40%
 Hence for the model the first letter would probably be one of these.
 
 ## Weighted random choice
-This is an important concept. We donot choose the character with the highest probability.
-Meaning we donot always do 40% → l therefore choose 1. Because then every generation would be identical.
+This is an important concept. We do not choose the character with the highest probability.
+Meaning we do not always do 40% → l therefore choose 1. Because then every generation would be identical.
 <br>
 
 By using sampling methods like torch.multinomial(), we introduce controlled randomness.
@@ -426,7 +426,7 @@ A good analogy to understand this is-
 <br>
 
 I found this analogy really helpful to understand the use of torch.multinomial().
-Hence: <b>torch.multinomial() draws random samples from a given probability distribution<b>
+Hence: <b>torch.multinomial() draws random samples from a given probability distribution</b>
 <br>
 
 Example generation:
